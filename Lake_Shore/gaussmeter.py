@@ -198,7 +198,10 @@ class Gaussmeter425(object):
     @DC_or_RMS.setter
     def DC_or_RMS(self, dc_or_rms):
         mode, filter, bandwidth = self.measurement_mode
-        new_mode = int(self.mode_to_int.get(dc_or_rms.upper(), dc_or_rms))
+        try:
+            new_mode = self.mode_to_int[dc_or_rms.upper()]
+        except AttributeError:
+            new_mode = int(dc_or_rms)
         self.measurement_mode = new_mode, filter, bandwidth
 
     @property
@@ -219,7 +222,10 @@ class Gaussmeter425(object):
     @AC_bandwidth.setter
     def AC_bandwidth(self, narrow_or_wide):
         mode, filter, bandwidth = self.measurement_mode
-        new_bandwidth = int(self.bandwidth_to_int.get(narrow_or_wide.lower(), narrow_or_wide))
+        try:
+            new_bandwidth = self.bandwidth_to_int[narrow_or_wide.lower()]
+        except AttributeError:
+            new_bandwidth = int(narrow_or_wide)
         self.measurement_mode = mode, filter, new_bandwidth
 
     @property
