@@ -34,9 +34,9 @@ class Gaussmeter425(object):
     # The code was tested with no class send delay and the following loop:
     # if new_field_reading:
     #     get field
-    #     sleep(short_communication_delay)
     # else:
     #     record a missed request
+    # sleep(short_communication_delay)
     #
     # With the delay below there was always a new field point ready and the gaussmeter responded slowly enough to
     # lower the communication rate to just under 30 Hz. The upshot is that this delay may be safe to use if the
@@ -86,8 +86,10 @@ class Gaussmeter425(object):
         return self.serial_port.readline().strip()
 
     def send_and_receive(self, message):
-        self.send(message)
-        return self.receive()
+        self.serial_port.write(message + self.termination)
+        message = self.receive()
+        time.sleep(self.communication_delay)
+        return message
 
     def process_last_query(self):
         return self.send_and_receive('?')
