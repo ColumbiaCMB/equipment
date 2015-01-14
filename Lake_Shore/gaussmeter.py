@@ -1,3 +1,4 @@
+from __future__ import division
 import time
 import serial
 
@@ -13,8 +14,35 @@ class Gaussmeter425(object):
     # flow control: None; this is the Serial default
     # handshaking: None; this is the Serial default
 
-    # From manual
-    communication_delay = 30e-3
+    # From page 50 of the  manual.
+    #
+    # When issuing commands the user program alone should:
+    # -Properly format and transmit the command including the terminator as one string
+    # -Guarantee that no other communication is started for 30 ms after the last character is transmitted
+    # -Not initiate communication more than 30 times/s
+    #
+    # When issuing queries or queries and commands together, the user program should:
+    # -Properly format and transmit the query including the terminator as one string
+    # -Prepare to receive a response immediately
+    # -Receive the entire response from the instrument including the terminator
+    # -Guarantee that no other communication is started during the response or for 30 ms after it completes
+    # -Not initiate communication more than 30 times/s
+
+    # The following delay ensures that the above conditions are satisfied, so the class uses this by default.
+    communication_delay = 1 / 30  # 33.3 ms
+
+    # The code was tested with no class send delay and the following loop:
+    # if new_field_reading:
+    #     get field
+    #     sleep(short_communication_delay)
+    # else:
+    #     record a missed request
+    #
+    # With the delay below there was always a new field point ready and the gaussmeter responded slowly enough to
+    # lower the communication rate to just under 30 Hz. The upshot is that this delay may be safe to use if the
+    # calling code has a significant external delay or tests for new field readings before requesting them,
+    # or if it just doesn't care about duplicate field points. It's not guaranteed to work in general.
+    short_communication_delay = 10e-3
 
     # The serial timeout
     timeout = 1
