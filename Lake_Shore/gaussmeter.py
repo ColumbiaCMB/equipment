@@ -22,6 +22,18 @@ class Gaussmeter425(object):
     # The serial termination character
     termination = '\n'
 
+    # Measurement modes
+    mode_to_int = {'DC': 1,
+                   'RMS': 2}
+    int_to_mode = {1: 'DC',
+                   2: 'RMS'}
+
+    # AC filter bandwidths
+    bandwidth_to_int = {'wide': 1,
+                        'narrow': 2}
+    int_to_bandwidth = {1: 'wide',
+                        2: 'narrow'}
+
     # Field units
     unit_to_int = {'Gauss': 1,
                    'Tesla': 2,
@@ -54,14 +66,14 @@ class Gaussmeter425(object):
 
     @property
     def identification(self):
-        return self.send_and_receive('*IDN?')
+        manufacturer, instrument_number, serial_number, firmware_version = self.send_and_receive('*IDN?').split(',')
+        return manufacturer, instrument_number, serial_number, float(firmware_version)
 
     def reset(self):
         self.send('*RST')
 
     # alarm
     # alarm?
-
     # alarmst?
 
     @property
@@ -70,7 +82,7 @@ class Gaussmeter425(object):
 
     @auto_range.setter
     def auto_range(self, boolean):
-        self.send('AUTO? {}'.format(int(boolean)))
+        self.send('AUTO {}'.format(int(boolean)))
 
     # beep
     # beep?
@@ -81,15 +93,67 @@ class Gaussmeter425(object):
     def factory_defaults(self):
         self.send('DFLT 99')
 
-    # keyst?
+    @property
+    def last_key_pressed(self):
+        return int(self.send_and_receive('KEYST?'))
 
-    # lock
-    # lock?
+    @property
+    def keyboard_lock(self):
+        return bool(self.send_and_receive('LOCK?'))
 
-    # mxhold
-    # mxhold?
+    @keyboard_lock.setter
+    def keyboard_lock(self, boolean):
+        self.send('LOCK {}'.format(int(boolean)))
 
-    # opst?
+    @property
+    def maximum_hold(self):
+        return bool(self.send_and_receive('MXHOLD?'))
+
+    @maximum_hold.setter
+    def maximum_hold(self, boolean):
+        self.send('MXHOLD {}'.format(int(boolean)))
+
+    def reset_maximum_field(self):
+        self.send('MXRST')
+
+    @property
+    def integer_status(self):
+        return int(self.send_and_receive('OPST?'))
+
+    @property
+    def boolean_status(self):
+        binary = format(self.integer_status, '08b')
+        return [bool(int(b)) for b in reversed(binary)]
+
+    @property
+    def no_probe(self):
+        return self.boolean_status[0]
+
+    @property
+    def field_overload(self):
+        return self.boolean_status[1]
+
+    @property
+    def new_field_reading(self):
+        return self.boolean_status[2]
+
+    @property
+    def alarm_condition(self):
+        return self.boolean_status[3]
+
+    @property
+    def invalid_probe(self):
+        return self.boolean_status[4]
+
+    # Bit 5 is apparently not used
+
+    @property
+    def calibration_error(self):
+        return self.boolean_status[6]
+
+    @property
+    def zero_probe_done(self):
+        return self.boolean_status[7]
 
     @property
     def probe_field_compensation(self):
@@ -117,33 +181,46 @@ class Gaussmeter425(object):
     def field(self):
         return float(self.send_and_receive('RDGFIELD?'))
 
-    # Rename
     @property
     def measurement_mode(self):
-        return self.send_and_receive('RDGMODE?')
+        mode, filter, bandwidth = self.send_and_receive('RDGMODE?').split(',')
+        return int(mode), int(filter), int(bandwidth)
 
     @measurement_mode.setter
-    def measurement_mode(self, mode_filter_band):
-        self.send('RDGMODE {}, {}, {}'.format(*mode_filter_band))
+    def measurement_mode(self, mode_filter_bandwidth):
+        self.send('RDGMODE {}, {}, {}'.format(*mode_filter_bandwidth))
 
     @property
     def DC_or_RMS(self):
-        pass
+        mode, filter, bandwidth = self.measurement_mode
+        return self.int_to_mode[mode]
+
+    @DC_or_RMS.setter
+    def DC_or_RMS(self, dc_or_rms):
+        mode, filter, bandwidth = self.measurement_mode
+        new_mode = int(self.mode_to_int.get(dc_or_rms.upper(), dc_or_rms))
+        self.measurement_mode = new_mode, filter, bandwidth
 
     @property
-    def DC_filter_on(self):
+    def DC_filter(self):
         mode, filter, band = self.measurement_mode
-        return bool(mode)
+        return bool(filter)
 
-    @DC_filter_on.setter
-    def DC_filter_on(self, boolean):
-        mode, filter, band = self.measurement_mode
-        self.measurement_mode = mode, int(filter), band
+    @DC_filter.setter
+    def DC_filter(self, boolean):
+        mode, filter, bandwidth = self.measurement_mode
+        self.measurement_mode = mode, int(boolean), bandwidth
 
     @property
-    def RMS_bandwidth(self):
-        pass
+    def AC_bandwidth(self):
+        mode, filter, bandwidth = self.measurement_mode
+        return self.int_to_bandwidth[bandwidth]
 
+    @AC_bandwidth.setter
+    def AC_bandwidth(self, narrow_or_wide):
+        mode, filter, bandwidth = self.measurement_mode
+        new_bandwidth = int(self.bandwidth_to_int.get(narrow_or_wide.lower(), narrow_or_wide))
+        self.measurement_mode = mode, filter, new_bandwidth
 
     @property
     def minimum_and_maximum_field(self):
@@ -190,7 +267,7 @@ class Gaussmeter425(object):
     # test
     @field_units.setter
     def field_units(self, units):
-        self.send('UNIT {}'.format(int(self.unit_to_int.get(str(units).capitalize(), units))))
+        self.send('UNIT {}'.format(self.unit_to_int.get(str(units).capitalize(), units)))
 
     def clear_zero_probe(self):
         self.send('ZCLEAR')
