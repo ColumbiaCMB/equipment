@@ -19,7 +19,7 @@ def animate(framedata, times, data, ax, line):
     times.append(t)
     data.append(y)
     t_padding = 0.1
-    ax.set_xlim(min(times) - t_padding, max(times) + t_padding)
+    ax.set_xlim(times[0] - t_padding, times[-1] + t_padding)
     y_padding = 0.1 * (max(data) - min(data)) or 1
     ax.set_ylim(min(data) - y_padding, max(data) + y_padding)
     line.set_xdata(times)
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             f = gm.field
             yield t, f
 
-    length = 100
+    length = 128
     data = deque([], maxlen=length)
     times = deque([], maxlen=length)
     fig, ax = plt.subplots(figsize=(3, 3))
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     ax.set_ylabel('field [{}]'.format(gm.field_units))
     line, = ax.plot(times, data, '-r')
 
-    anim = animation.FuncAnimation(fig, animate, get_gaussmeter, fargs=(times, data, ax, line), interval=frame_delay)
-    #anim = animation.FuncAnimation(fig, animate, frames=get_random, interval=100)
+    anim = animation.FuncAnimation(fig, animate, frames=get_gaussmeter, fargs=(times, data, ax, line), interval=frame_delay)
+    #anim = animation.FuncAnimation(fig, animate, frames=get_random, fargs=(times, data, ax, line), interval=100)
 
     plt.show()
