@@ -214,9 +214,173 @@ class SR830(object):
     # Interface commands
 
     def reset(self):
+        """
+        Reset the lock-in to its default configuration.
+
+        This method implements the *RST command.
+        """
         self.send('*RST')
 
     @property
     def identification(self):
+        """
+        This property implements the *IDN command.
+
+        :return: a four-element tuple containing identification information.
+        """
         return tuple(self.send_and_receive('*IDN?').split(','))
+
+    @property
+    def local(self):
+        """
+        This property implements the LOCL command.
+        """
+        return int(self.send_and_receive('LOCL?'))
+
+    @local.setter
+    def local(self, integer):
+        self.send('LOCL {:d}'.format(integer))
+
+
+    # OVRM
+
+    def trigger(self):
+        """
+        This method implements the TRIG command.
+        """
+        self.send('TRIG')
+
+    # Status reporting commands
+
+    def clear_status(self):
+        """
+        This method implements the *CLS command.
+        """
+        self.send('*CLS')
+
+    # *ESE
+
+    # *ESR
+
+    @property
+    def input_queue_overflow(self):
+        return bool(int(self.send_and_receive('*ESR? 0')))
+
+    @property
+    def output_queue_overflow(self):
+        return bool(int(self.send_and_receive('*ESR? 2')))
+
+    @property
+    def execution_or_paramater_error(self):
+        return bool(int(self.send_and_receive('*ESR? 4')))
+
+    @property
+    def illegal_command(self):
+        return bool(int(self.send_and_receive('*ESR? 5')))
+
+    @property
+    def key_pressed(self):
+        return bool(int(self.send_and_receive('*ESR? 6')))
+
+    @property
+    def power_on(self):
+        return bool(int(self.send_and_receive('*ESR? 7')))
+
+    # *SRE
+
+    # STB
+
+    @property
+    def no_scan_in_progress(self):
+        return bool(int(self.send_and_receive('ESE? 0')))
+
+    @property
+    def no_command_in_progress(self):
+        return bool(int(self.send_and_receive('ESE? 1')))
+
+    @property
+    def any_error_status(self):
+        return bool(int(self.send_and_receive('ESE? 2')))
+
+    @property
+    def any_lockin_status(self):
+        return bool(int(self.send_and_receive('ESE? 3')))
+
+    @property
+    def interface_output_buffer_nonempty(self):
+        return bool(int(self.send_and_receive('ESE? 4')))
+
+    @property
+    def any_standard_status(self):
+        return bool(int(self.send_and_receive('ESE? 5')))
+
+    @property
+    def service_request(self):
+        return bool(int(self.send_and_receive('ESE? 6')))
+
+    # *PSC
+
+    # ERRE
+
+    # ERRS
+
+    @property
+    def battery_error(self):
+        return bool(int(self.send_and_receive('ERRS? 1')))
+
+    @property
+    def RAM_error(self):
+        return bool(int(self.send_and_receive('ERRS? 2')))
+
+    @property
+    def ROM_error(self):
+        return bool(int(self.send_and_receive('ERRS? 4')))
+
+    @property
+    def GPIB_error(self):
+        return bool(int(self.send_and_receive('ERRS? 5')))
+
+    @property
+    def DSP_error(self):
+        return bool(int(self.send_and_receive('ERRS? 6')))
+
+    @property
+    def math_error(self):
+        return bool(int(self.send_and_receive('ERRS? 7')))
+
+    # LIAE
+
+    # LIAS
+
+    @property
+    def input_overload(self):
+        return bool(int(self.send_and_receive('LIAS? 0')))
+
+    @property
+    def filter_overload(self):
+        return bool(int(self.send_and_receive('LIAS? 1')))
+
+    @property
+    def output_overload(self):
+        return bool(int(self.send_and_receive('LIAS? 2')))
+
+    @property
+    def reference_unlock(self):
+        return bool(int(self.send_and_receive('LIAS? 3')))
+
+    @property
+    def reference_unlock(self):
+        return bool(int(self.send_and_receive('LIAS? 3')))
+
+    @property
+    def frequency_range_switch(self):
+        return bool(int(self.send_and_receive('LIAS? 4')))
+
+    @property
+    def time_constant_changed(self):
+        return bool(int(self.send_and_receive('LIAS? 5')))
+
+    @property
+    def triggered(self):
+        return bool(int(self.send_and_receive('LIAS? 6')))
 
