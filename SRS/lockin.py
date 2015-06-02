@@ -16,14 +16,6 @@ class SR830(object):
 
     termination = '\n'
 
-    token_to_boolean = {'OFF': False,
-                        '0': False,
-                        'ON': True,
-                        '1': True}
-
-    boolean_to_token = {True: 'ON',
-                        False: 'OFF'}
-
     # This is experimental. The methods that send commands wait for this time in seconds:
     communication_delay = 1e-3
 
@@ -35,6 +27,7 @@ class SR830(object):
 
     def send(self, message):
         self.serial.write(message + self.termination)
+        time.sleep(self.communication_delay)
 
     def receive(self):
         return self.serial.readline().strip()
@@ -241,7 +234,6 @@ class SR830(object):
     def local(self, integer):
         self.send('LOCL {:d}'.format(integer))
 
-
     # OVRM
 
     def trigger(self):
@@ -271,7 +263,7 @@ class SR830(object):
         return bool(int(self.send_and_receive('*ESR? 2')))
 
     @property
-    def execution_or_paramater_error(self):
+    def execution_or_parameter_error(self):
         return bool(int(self.send_and_receive('*ESR? 4')))
 
     @property
@@ -329,19 +321,19 @@ class SR830(object):
         return bool(int(self.send_and_receive('ERRS? 1')))
 
     @property
-    def RAM_error(self):
+    def ram_error(self):
         return bool(int(self.send_and_receive('ERRS? 2')))
 
     @property
-    def ROM_error(self):
+    def rom_error(self):
         return bool(int(self.send_and_receive('ERRS? 4')))
 
     @property
-    def GPIB_error(self):
+    def gpib_error(self):
         return bool(int(self.send_and_receive('ERRS? 5')))
 
     @property
-    def DSP_error(self):
+    def dsp_error(self):
         return bool(int(self.send_and_receive('ERRS? 6')))
 
     @property
