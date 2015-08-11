@@ -3,7 +3,7 @@ from collections import deque
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from equipment.visualize import animate
-from equipment.Lake_Shore import gaussmeter
+from equipment.lake_shore import gaussmeter
 
 # TODO: add command line options
 if __name__ == '__main__':
