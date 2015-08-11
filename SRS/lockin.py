@@ -1,11 +1,7 @@
 """
 This module contains classes to interface with SRS lock-in amplifiers.
 """
-from __future__ import division
-import os
-import time
 import serial
-import numpy as np
 
 
 class LockinError(Exception):
@@ -16,9 +12,6 @@ class SR830(object):
 
     termination = '\n'
 
-    # This is experimental. The methods that send commands wait for this time in seconds:
-    communication_delay = 1e-3
-
     # TODO: figure out the acceptable formats for floats
     float_format = ':.6f'
 
@@ -27,7 +20,6 @@ class SR830(object):
 
     def send(self, message):
         self.serial.write(message + self.termination)
-        time.sleep(self.communication_delay)
 
     def receive(self):
         return self.serial.readline().strip()
@@ -149,13 +141,23 @@ class SR830(object):
 
     # Auto functions
 
-    # AGAN
+    def auto_gain(self):
+        self.send('AGAN')
 
-    # ARSV
+    def auto_reserve(self):
+        self.send('ARSV')
 
-    # APHS
+    def auto_phase(self):
+        self.send('APHS')
 
-    # AOFF
+    def auto_offset_X(self):
+        self.send('AOFF 1')
+
+    def auto_offset_Y(self):
+        self.send('AOFF 2')
+
+    def auto_offset_R(self):
+        self.send('AOFF 3')
 
     # Data storage commands
 
@@ -186,13 +188,53 @@ class SR830(object):
 
     # OUTP
 
+    @property
+    def X(self):
+        return float(self.send_and_receive('OUTP? 1'))
+
+    @property
+    def Y(self):
+        return float(self.send_and_receive('OUTP? 2'))
+
+    @property
+    def R(self):
+        return float(self.send_and_receive('OUTP? 3'))
+
+    @property
+    def theta(self):
+        return float(self.send_and_receive('OUTP? 4'))
+
     # OUTR
 
     # SNAP
+    def snap(self, *parameters):
+        message = 'SNAP? ' + ','.join([str(int(p)) for p in parameters])
+        response = self.send_and_receive(message)
+        return [float(s) for s in response.split(',')]
 
     # OAUX
 
+    @property
+    def aux1(self):
+        return float(self.send_and_receive('OAUX? 1'))
+
+    @property
+    def aux2(self):
+        return float(self.send_and_receive('OAUX? 2'))
+
+    @property
+    def aux3(self):
+        return float(self.send_and_receive('OAUX? 3'))
+
+    @property
+    def aux4(self):
+        return float(self.send_and_receive('OAUX? 4'))
+
     # SPTS
+
+    @property
+    def n_stored_points(self):
+        return int(self.send_and_receive('SPTS?'))
 
     # TRCA
 
@@ -284,31 +326,31 @@ class SR830(object):
 
     @property
     def no_scan_in_progress(self):
-        return bool(int(self.send_and_receive('ESE? 0')))
+        return bool(int(self.send_and_receive('*STB? 0')))
 
     @property
     def no_command_in_progress(self):
-        return bool(int(self.send_and_receive('ESE? 1')))
+        return bool(int(self.send_and_receive('*STB? 1')))
 
     @property
     def any_error_status(self):
-        return bool(int(self.send_and_receive('ESE? 2')))
+        return bool(int(self.send_and_receive('*STB? 2')))
 
     @property
     def any_lockin_status(self):
-        return bool(int(self.send_and_receive('ESE? 3')))
+        return bool(int(self.send_and_receive('*STB? 3')))
 
     @property
     def interface_output_buffer_nonempty(self):
-        return bool(int(self.send_and_receive('ESE? 4')))
+        return bool(int(self.send_and_receive('*STB? 4')))
 
     @property
     def any_standard_status(self):
-        return bool(int(self.send_and_receive('ESE? 5')))
+        return bool(int(self.send_and_receive('*STB? 5')))
 
     @property
     def service_request(self):
-        return bool(int(self.send_and_receive('ESE? 6')))
+        return bool(int(self.send_and_receive('*STB? 6')))
 
     # *PSC
 
