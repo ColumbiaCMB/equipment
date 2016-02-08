@@ -31,7 +31,7 @@ def main():
     length = 128  # the number of samples displayed
     data = deque([], maxlen=length)
     times = deque([], maxlen=length)
-    fig, ax = plt.subplots(figsize=(3, 3))
+    fig, ax = plt.subplots(figsize=(2, 2))
     ax.set_xlabel('time [s]')
     ax.set_ylabel('random data [arbs]')
     line, = ax.plot(times, data, '-r')

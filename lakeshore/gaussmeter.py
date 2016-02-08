@@ -312,4 +312,36 @@ class Gaussmeter425(object):
         self.send('ZPROBE')
 
 
+def main(length=2**9, device='/dev/tty.SLAB_USBtoUART', field_units='Tesla', field_scale=1e6,
+         field_unit_prefix=r'$\mu$', frame_delay_ms=25, figsize=(3, 2.5)):
+    from collections import deque
+    import matplotlib.pyplot as plt
+    from matplotlib import animation
+    from equipment.visualize.animate import animate
 
+    gm = Gaussmeter425(device)
+
+    def get_gaussmeter():
+        t0 = time.time()
+        while True:
+            t = time.time() - t0
+            f = field_scale * gm.field
+            yield t, f
+
+    # As long as the communication delay plus the frame delay is greater than about 33 ms, there should be no
+    # communication problems.
+    gm.communication_delay = gm.short_communication_delay
+    gm.field_units = field_units
+    data = deque([], maxlen=length)
+    times = deque([], maxlen=length)
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.set_xlabel('time [s]')
+    ax.set_ylabel('field [{}{}]'.format(field_unit_prefix, gm.field_units))
+    line, = ax.plot(times, data, '-r')
+    anim = animation.FuncAnimation(fig, animate, frames=get_gaussmeter, fargs=(times, data, ax, line),
+                                   interval=frame_delay_ms)
+    plt.show()
+
+
+if __name__ == '__main__':
+    main()
