@@ -11,13 +11,13 @@ class LockinError(Exception):
 class SR830(object):
 
     termination = '\n'
+    name = "lockin"
 
     # TODO: figure out the acceptable formats for floats
     float_format = ':.6f'
 
     def __init__(self, serial_device, baud_rate=19200, timeout=1):
         self.serial = serial.Serial(serial_device, baudrate=baud_rate, timeout=timeout, rtscts=True)
-        self.name = "lockin"
 
     def send(self, message):
         self.serial.write(message + self.termination)
