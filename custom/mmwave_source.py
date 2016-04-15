@@ -4,7 +4,10 @@ class MMWaveSource(object):
     def __init__(self):
         self._state = dict(multiplier_input = None, ttl_modulation_source=None, multiplier_factor=12.0,
                            before_multiplier = None, after_multiplier = 'bpf_140_160_GHz', waveguide_twist_angle = None)
-        self._required_keys = ['multiplier_input', 'ttl_modulation_source', 'waveguide_twist_angle']
+        self._required_keys = ['multiplier_input', 'ttl_modulation_source', 'waveguide_twist_angle', 'mickey_ticks',
+                               'minnie_ticks']
+        self.ticks_per_turn = 25.
+
     @property
     def state(self):
         for key in self._required_keys:
@@ -12,6 +15,13 @@ class MMWaveSource(object):
                 raise RuntimeError("You must set the state of these properties before requesting state: "
                                    + ' '.join(self._required_keys))
         return self._state
+
+    def set_attentuator_ticks(self,mickey,minnie):
+        self._state['mickey_ticks'] = mickey
+        self._state['minnie_ticks'] = minnie
+
+    def set_attenuator_turns(self,mickey,minnie):
+        self.set_attentuator_ticks(mickey*self.ticks_per_turn,minnie*self.ticks_per_turn)
 
     @property
     def multiplier_input(self):
