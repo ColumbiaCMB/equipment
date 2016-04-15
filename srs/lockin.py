@@ -17,6 +17,7 @@ class SR830(object):
 
     def __init__(self, serial_device, baud_rate=19200, timeout=1):
         self.serial = serial.Serial(serial_device, baudrate=baud_rate, timeout=timeout, rtscts=True)
+        self.name = "lockin"
 
     def send(self, message):
         self.serial.write(message + self.termination)
@@ -28,6 +29,9 @@ class SR830(object):
         self.send(message)
         return self.receive()
 
+    @property
+    def state(self):
+        return dict(rms_voltage=self.R, time_constant=self.time_constant, sensitivity=self.sensitivity)
     # The commands are listed in the same order as in the manual.
 
     # Reference and phase commands
@@ -418,3 +422,4 @@ class SR830(object):
     def triggered(self):
         return bool(int(self.send_and_receive('LIAS? 6')))
 
+Lockin = SR830
