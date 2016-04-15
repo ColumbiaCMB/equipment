@@ -23,15 +23,28 @@ class SR830(object):
         self.serial.write(message + self.termination)
 
     def receive(self):
-        return self.serial.readline().strip()
+        #return self.serial.readline().strip()
+        return self.read_until_terminator()
+
+    def read_until_terminator(self):
+        message=''
+        new_char=None
+        while new_char!='\r':
+            new_char= self.serial.read(1)
+            if new_char=='':
+                # This meansself.ser has timed out. We don't want an unending loop if the terminator has somehow been lost.
+                print 'Serial port timed out while reading.'
+                break
+            message+=new_char
+        return message
+
 
     def send_and_receive(self, message):
         self.send(message)
         return self.receive()
 
-    @property
     def state(self):
-        return dict(rms_voltage=self.R, time_constant=self.time_constant, sensitivity=self.sensitivity)
+        return dict(rms_voltage=self.R)#, time_constant=self.time_constant, sensitivity=self.sensitivity)
     # The commands are listed in the same order as in the manual.
 
     # Reference and phase commands

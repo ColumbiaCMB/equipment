@@ -4,7 +4,7 @@ class Hittite():
     name = 'hittite'
     def __init__(self, ipaddr=None, port=50000, terminator='\r', connect=True):
         #TODO: probably read state from the equipment eventually
-        self.state = dict(output_on=False, frequency = 10.5e9, power_dBm = 0.0)
+        self._state = dict(output_on=False, frequency = 10.5e9, power_dBm = 0.0)
         if ipaddr:
             self.address=(ipaddr,port)
         else:
@@ -18,6 +18,9 @@ class Hittite():
         self.terminator=terminator
         if connect:
             self.connect()
+
+    def state(self):
+        return self._state
 
     def connect(self):
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
@@ -53,15 +56,15 @@ class Hittite():
 
     def on(self):
         self.send('OUTP ON')
-        self.state['output_on'] = True
+        self._state['output_on'] = True
     def off(self):
         self.send('OUTP OFF')
-        self.state['output_on'] = False
+        self._state['output_on'] = False
     def set_freq(self,freq):
         msg='FREQ %f'%(freq)
         self.send(msg)
-        self.state['frequency'] = freq
+        self._state['frequency'] = freq
     def set_power(self,power):
         msg='POW %f'%(power)
         self.send(msg)
-        self.state['power_dBm'] = power
+        self._state['power_dBm'] = power

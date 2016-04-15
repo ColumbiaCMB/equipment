@@ -3,12 +3,13 @@ class MMWaveSource(object):
     name = 'mmwave_source'
     def __init__(self):
         self._state = dict(multiplier_input = None, ttl_modulation_source=None, multiplier_factor=12.0,
-                           before_multiplier = None, after_multiplier = 'bpf_140_160_GHz', waveguide_twist_angle = None)
+                           before_multiplier = None, after_multiplier = 'bpf_140_160_GHz',
+                           waveguide_twist_angle = None, mickey_ticks = None, minnie_ticks = None
+                           )
         self._required_keys = ['multiplier_input', 'ttl_modulation_source', 'waveguide_twist_angle', 'mickey_ticks',
                                'minnie_ticks']
         self.ticks_per_turn = 25.
 
-    @property
     def state(self):
         for key in self._required_keys:
             if self._state[key] is None:
