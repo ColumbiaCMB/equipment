@@ -2,6 +2,7 @@
 This module contains classes to interface with SRS lock-in amplifiers.
 """
 import serial
+import warnings
 
 
 class LockinError(Exception):
@@ -10,7 +11,9 @@ class LockinError(Exception):
 
 class SR830(object):
 
-    termination = '\n'
+    # The SR830 will accept either newline (\n) or carriage return (\r) as the termination for input.
+    # It returns strings ending in \r, so we can use the same for both.
+    termination = '\r'
     name = "lockin"
 
     # TODO: figure out the acceptable formats for floats
@@ -27,23 +30,45 @@ class SR830(object):
         return self.read_until_terminator()
 
     def read_until_terminator(self):
-        message=''
-        new_char=None
-        while new_char!='\r':
-            new_char= self.serial.read(1)
-            if new_char=='':
-                # This meansself.ser has timed out. We don't want an unending loop if the terminator has somehow been lost.
-                print 'Serial port timed out while reading.'
+        characters = []
+        while True:
+            character = self.serial.read()
+            if not character:  # self.serial has timed out.
+                warnings.warn("Serial port timed out while reading.")
                 break
-            message+=new_char
-        return message
+            elif character == self.termination:
+                break
+            else:
+                characters.append(character)
+        return ''.join(characters).rstrip()  # Some commands seem to return both a space and carriage return.
 
     def send_and_receive(self, message):
         self.send(message)
         return self.receive()
 
     def state(self):
-        return dict(rms_voltage=self.R)#, time_constant=self.time_constant, sensitivity=self.sensitivity)
+        rms_voltage, voltage_phase = self.snap(3, 4)  # ensure that these are taken simultaneously.
+        return {'rms_voltage': rms_voltage,
+                'voltage_phase': voltage_phase,
+                'reference_phase': self.reference_phase,
+                'reference_source': self.reference_source,
+                'reference_frequency': self.reference_frequency,
+                'reference_trigger': self.reference_trigger,
+                'detection_harmonic': self.detection_harmonic,
+                'sine_output_voltage': self.sine_output_voltage,
+                'input_configuration': self.input_configuration,
+                'input_shield_grounding': self.input_shield_grounding,
+                'input_coupling': self.input_coupling,
+                'input_notch_filter': self.input_notch_filter,
+                'sensitivity': self.sensitivity,
+                'reserve_mode': self.reserve_mode,
+                'time_constant': self.time_constant,
+                'output_filter_slope': self.output_filter_slope,
+                'sync_filter': self.sync_filter,
+                'sample_rate': self.sample_rate,
+                'identification': self.identification,
+                'local': self.local,
+                }
 
     def _wait_until_idle(self):
         while True:
@@ -53,25 +78,30 @@ class SR830(object):
             except ValueError:
                 continue
 
-    # The commands are listed in the same order as in the manual.
+    # The following properties and methods implement commands listed in the manaul. They appear in the same order as in
+    # the manual.
 
     # Reference and phase commands
 
     @property
-    def phase(self):
+    def reference_phase(self):
         """
-        This is the phase in degrees, represented by a float. It implements the PHAS (?) command.
+        This is the reference phase in degrees, represented by a float.
+         
+        This property implements the PHAS (?) command.
         """
         return float(self.send_and_receive('PHAS?'))
 
-    @phase.setter
-    def phase(self, phase):
+    @reference_phase.setter
+    def reference_phase(self, phase):
         self.send(('PHAS {' + self.float_format + '}').format(phase))
 
     @property
     def reference_source(self):
         """
-        This is the reference source, represented by an int. It implements the FMOD (?) command.
+        This is the reference source, represented by an int. 
+        
+        This property implements the FMOD (?) command.
         """
         return int(self.send_and_receive('FMOD?'))
 
@@ -82,7 +112,9 @@ class SR830(object):
     @property
     def reference_frequency(self):
         """
-        This is the reference frequency in Hertz, represented by a float. It implements the FREQ (?) command.
+        This is the reference frequency in Hertz, represented by a float.
+        
+        This property implements the FREQ (?) command.
         """
         return float(self.send_and_receive('FREQ?'))
 
@@ -90,26 +122,105 @@ class SR830(object):
     def reference_frequency(self, frequency):
         self.send(('FREQ {' + self.float_format + '}').format(frequency))
 
-    # RSLP
+    @property
+    def reference_trigger(self):
+        """
+        This is the reference trigger mode, represented by an int. See the manual.
+        
+        This property implements the RSLP (?) command.
+        """
+        return int(self.send_and_receive('RSLP?'))
 
-    # HARM
+    @reference_trigger.setter
+    def reference_trigger(self, integer):
+        self.send('RSLP {:d}'.format(integer))
 
-    # SLVL
+    @property
+    def detection_harmonic(self):
+        """
+        This is the detection harmonic, represented by an int. See the manual.
+        
+        This property implements the HARM (?) command.
+        """
+        return int(self.send_and_receive('HARM?'))
 
-    # ISRC
+    @detection_harmonic.setter
+    def detection_harmonic(self, integer):
+        self.send('HARM {:d}'.format(integer))
 
-    # IGND
+    @property
+    def sine_output_voltage(self):
+        """
+        The sine output voltage in volts, represented by a float.
+        
+        This property implements the SLVL (?) command.
+        """
+        return float(self.send_and_receive('SLVL?'))
 
-    # ICPL
+    @sine_output_voltage.setter
+    def sine_output_voltage(self, voltage):
+        self.send(('SLVL {' + self.float_format + '}').format(voltage))
 
-    # ILIN
+    @property
+    def input_configuration(self):
+        """
+        This is the input configuration mode, represented by an int. See the manual.
+
+        This property implements the ISRC (?) command.
+        """
+        return int(self.send_and_receive('ISRC?'))
+
+    @input_configuration.setter
+    def input_configuration(self, integer):
+        self.send('ISRC {:d}'.format(integer))
+
+    @property
+    def input_shield_grounding(self):
+        """
+        This is the input shield grounding mode, represented by an int. See the manual.
+
+        This property implements the IGND (?) command.
+        """
+        return int(self.send_and_receive('IGND?'))
+
+    @input_shield_grounding.setter
+    def input_shield_grounding(self, integer):
+        self.send('IGND {:d}'.format(integer))
+
+    @property
+    def input_coupling(self):
+        """
+        This is the input coupling mode: AC is 0 and DC is 1.
+
+        This property implements the ICPL (?) command.
+        """
+        return int(self.send_and_receive('ICPL?'))
+
+    @input_coupling.setter
+    def input_coupling(self, integer):
+        self.send('ICPL {:d}'.format(integer))
+
+    @property
+    def input_notch_filter(self):
+        """
+        This is the input notch filter status, represented by an int. See the manual.
+
+        This property implements the ILIN (?) command.
+        """
+        return int(self.send_and_receive('ILIN?'))
+
+    @input_notch_filter.setter
+    def input_notch_filter(self, integer):
+        self.send('ILIN {:d}'.format(integer))
 
     # Gain and time constant commands
 
     @property
     def sensitivity(self):
         """
-        This is the sensitivity, represented by an int. See the manual. It implements the SENS (?) command.
+        This is the sensitivity, represented by an int. See the manual.
+        
+        This property implements the SENS (?) command.
         """
         return int(self.send_and_receive('SENS?'))
 
@@ -117,12 +228,25 @@ class SR830(object):
     def sensitivity(self, integer):
         self.send('SENS {:d}'.format(integer))
 
-    # RMOD
+    @property
+    def reserve_mode(self):
+        """
+        This is the reserve mode, represented by an int. See the manual.
+
+        This property implements the RMOD (?) command.
+        """
+        return int(self.send_and_receive('RMOD?'))
+
+    @reserve_mode.setter
+    def reserve_mode(self, integer):
+        self.send('RMOD {:d}'.format(integer))
 
     @property
     def time_constant(self):
         """
-        This is the output time constant, represented by an int. See the manual. It implements the OFLT (?) command.
+        This is the output time constant, represented by an int. See the manual.
+
+        This property implements the OFLT (?) command.
         """
         return int(self.send_and_receive('OFLT?'))
 
@@ -151,9 +275,32 @@ class SR830(object):
                                         18: 10e3,
                                         19: 30e3}
 
-    # OFSL
+    @property
+    def output_filter_slope(self):
+        """
+        This is the output low-pass filter slope, represented by an int. See the manual.
 
-    # SYNC
+        This property implements the OFSL (?) command.
+        """
+        return int(self.send_and_receive('OFSL?'))
+
+    @output_filter_slope.setter
+    def output_filter_slope(self, integer):
+        self.send('OFSL {:d}'.format(integer))
+
+    @property
+    def sync_filter(self):
+        """
+        This is the output synchronous filter, represented by a bool. True means that the sync filter is on if the
+        reference frequency is below 200 Hz.
+        
+        This property implements the SYNC (?) command.
+        """
+        return bool(int(self.send_and_receive('SYNC?')))
+
+    @sync_filter.setter
+    def sync_filter(self, boolean):
+        self.send('SYNC {:d}'.format(boolean))
 
     # Display and output commands
 
@@ -188,16 +335,37 @@ class SR830(object):
     # Auto functions
 
     def auto_gain(self, wait_until_done=True):
+        """
+        Perform the auto gain function.
+
+        This method implements the AGAN command.
+
+        :param wait_until_done: If True, this function will return only when the process has completed.
+        """
         self.send('AGAN')
         if wait_until_done:
             self._wait_until_idle()
 
     def auto_reserve(self, wait_until_done=True):
+        """
+        Perform the auto reserve function.
+
+        This method implements the ARSV command.
+
+        :param wait_until_done: If True, this function will return only when the process has completed.
+        """
         self.send('ARSV')
         if wait_until_done:
             self._wait_until_idle()
 
     def auto_phase(self, wait_until_done=True):
+        """
+        Perform the auto phase function.
+
+        This method implements the APHS command.
+
+        :param wait_until_done: If True, this function will return only when the process has completed.
+        """
         self.send('APHS')
         if wait_until_done:
             self._wait_until_idle()
@@ -222,7 +390,9 @@ class SR830(object):
     @property
     def sample_rate(self):
         """
-        This is the sample rate, represented by an int. See the manual. It implements the SRAT command.
+        This is the sample rate, represented by an int. See the manual.
+
+        This property implements the SRAT command.
         """
         return int(self.send_and_receive('SRAT?'))
 
@@ -244,8 +414,6 @@ class SR830(object):
 
     # Data transfer commands
 
-    # OUTP
-
     @property
     def X(self):
         return float(self.send_and_receive('OUTP? 1'))
@@ -264,7 +432,6 @@ class SR830(object):
 
     # OUTR
 
-    # SNAP
     def snap(self, *parameters):
         message = 'SNAP? ' + ','.join([str(int(p)) for p in parameters])
         response = self.send_and_receive(message)
@@ -352,8 +519,6 @@ class SR830(object):
 
     # *ESE
 
-    # *ESR
-
     @property
     def input_queue_overflow(self):
         return bool(int(self.send_and_receive('*ESR? 0')))
@@ -379,8 +544,6 @@ class SR830(object):
         return bool(int(self.send_and_receive('*ESR? 7')))
 
     # *SRE
-
-    # STB
 
     @property
     def no_scan_in_progress(self):
@@ -414,8 +577,6 @@ class SR830(object):
 
     # ERRE
 
-    # ERRS
-
     @property
     def battery_error(self):
         return bool(int(self.send_and_receive('ERRS? 1')))
@@ -441,8 +602,6 @@ class SR830(object):
         return bool(int(self.send_and_receive('ERRS? 7')))
 
     # LIAE
-
-    # LIAS
 
     @property
     def input_overload(self):
