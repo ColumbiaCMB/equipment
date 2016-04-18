@@ -435,4 +435,5 @@ class SR830(object):
     def triggered(self):
         return bool(int(self.send_and_receive('LIAS? 6')))
 
+
 Lockin = SR830
