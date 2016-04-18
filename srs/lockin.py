@@ -38,13 +38,21 @@ class SR830(object):
             message+=new_char
         return message
 
-
     def send_and_receive(self, message):
         self.send(message)
         return self.receive()
 
     def state(self):
         return dict(rms_voltage=self.R)#, time_constant=self.time_constant, sensitivity=self.sensitivity)
+
+    def _wait_until_idle(self):
+        while True:
+            try:
+                if self.no_command_in_progress:
+                    break
+            except ValueError:
+                continue
+
     # The commands are listed in the same order as in the manual.
 
     # Reference and phase commands
@@ -122,6 +130,27 @@ class SR830(object):
     def time_constant(self, integer):
         self.send('OFLT {:d}'.format(integer))
 
+    time_constant_integer_to_seconds = {0: 10e-6,
+                                        1: 30e-6,
+                                        2: 100e-6,
+                                        3: 300e-6,
+                                        4: 1e-3,
+                                        5: 3e-3,
+                                        6: 10e-3,
+                                        7: 30e-3,
+                                        8: 100e-3,
+                                        9: 300e-3,
+                                        10: 1.,
+                                        11: 3.,
+                                        12: 10.,
+                                        13: 30.,
+                                        14: 100.,
+                                        15: 300.,
+                                        16: 1e3,
+                                        17: 3e3,
+                                        18: 10e3,
+                                        19: 30e3}
+
     # OFSL
 
     # SYNC
@@ -158,23 +187,35 @@ class SR830(object):
 
     # Auto functions
 
-    def auto_gain(self):
+    def auto_gain(self, wait_until_done=True):
         self.send('AGAN')
+        if wait_until_done:
+            self._wait_until_idle()
 
-    def auto_reserve(self):
+    def auto_reserve(self, wait_until_done=True):
         self.send('ARSV')
+        if wait_until_done:
+            self._wait_until_idle()
 
-    def auto_phase(self):
+    def auto_phase(self, wait_until_done=True):
         self.send('APHS')
+        if wait_until_done:
+            self._wait_until_idle()
 
-    def auto_offset_X(self):
+    def auto_offset_X(self, wait_until_done=True):
         self.send('AOFF 1')
+        if wait_until_done:
+            self._wait_until_idle()
 
-    def auto_offset_Y(self):
+    def auto_offset_Y(self, wait_until_done=True):
         self.send('AOFF 2')
+        if wait_until_done:
+            self._wait_until_idle()
 
-    def auto_offset_R(self):
+    def auto_offset_R(self, wait_until_done=True):
         self.send('AOFF 3')
+        if wait_until_done:
+            self._wait_until_idle()
 
     # Data storage commands
 
