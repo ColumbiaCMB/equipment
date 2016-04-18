@@ -2,7 +2,6 @@ from __future__ import division
 
 from os.path import splitext
 import numpy as np
-#import matplotlib.pyplot as plt
 
 class Sweep(object):
 

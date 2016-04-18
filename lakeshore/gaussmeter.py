@@ -312,8 +312,9 @@ class Gaussmeter425(object):
         self.send('ZPROBE')
 
 
-def main(length=2**9, device='/dev/tty.SLAB_USBtoUART', field_units='Tesla', field_scale=1e6,
-         field_unit_prefix=r'$\mu$', frame_delay_ms=25, figsize=(3, 2.5)):
+def main(samples=2 ** 8, device='/dev/tty.SLAB_USBtoUART', frame_delay_ms=25,
+         field_units='Tesla', field_scale=1e6, field_unit_prefix=r'$\mu$',
+         figsize=(3, 2.5), **plot_kwargs):
     from collections import deque
     import matplotlib.pyplot as plt
     from matplotlib import animation
@@ -332,12 +333,12 @@ def main(length=2**9, device='/dev/tty.SLAB_USBtoUART', field_units='Tesla', fie
     # communication problems.
     gm.communication_delay = gm.short_communication_delay
     gm.field_units = field_units
-    data = deque([], maxlen=length)
-    times = deque([], maxlen=length)
+    data = deque([], maxlen=samples)
+    times = deque([], maxlen=samples)
     fig, ax = plt.subplots(figsize=figsize)
     ax.set_xlabel('time [s]')
     ax.set_ylabel('field [{}{}]'.format(field_unit_prefix, gm.field_units))
-    line, = ax.plot(times, data, '-r')
+    line, = ax.plot(times, data, **plot_kwargs)
     anim = animation.FuncAnimation(fig, animate, frames=get_gaussmeter, fargs=(times, data, ax, line),
                                    interval=frame_delay_ms)
     plt.show()
