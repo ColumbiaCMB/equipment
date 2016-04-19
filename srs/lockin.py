@@ -46,8 +46,11 @@ class SR830(object):
         self.send(message)
         return self.receive()
 
-    def state(self):
+    def state(self, measurement_only=False):
         rms_voltage, voltage_phase = self.snap(3, 4)  # ensure that these are taken simultaneously.
+        if measurement_only:
+            return dict(rms_voltage=rms_voltage, voltage_phase=voltage_phase)
+
         return {'rms_voltage': rms_voltage,
                 'voltage_phase': voltage_phase,
                 'reference_phase': self.reference_phase,
