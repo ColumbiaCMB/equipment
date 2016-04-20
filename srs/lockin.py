@@ -3,7 +3,7 @@ This module contains classes to interface with SRS lock-in amplifiers.
 """
 import serial
 import warnings
-
+import numpy as np
 
 class LockinError(Exception):
     pass
@@ -230,6 +230,9 @@ class SR830(object):
     @sensitivity.setter
     def sensitivity(self, integer):
         self.send('SENS {:d}'.format(integer))
+
+    #sensitivity table. sensitivities[integer] -> volts
+    sensitivities = ((np.array([1,2,5])[None,:])*((10.**np.arange(-9,1))[:,None])).flatten()[1:-2]
 
     @property
     def reserve_mode(self):
