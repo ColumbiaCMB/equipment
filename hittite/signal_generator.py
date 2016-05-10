@@ -1,13 +1,16 @@
 import socket
 
+
 class Hittite():
+
     name = 'hittite'
+
     def __init__(self, ipaddr=None, port=50000, terminator='\r', connect=True):
         #TODO: probably read state from the equipment eventually
         self._state = dict(output_on=False, frequency = 10.5e9, power_dBm = 0.0)
         if ipaddr:
             self.address=(ipaddr,port)
-        else:
+        else:  # TODO: use defaults from columbia.py instead of hardcoding here
             self.address=('192.168.001.070',port)
             try:
                 self.connect()

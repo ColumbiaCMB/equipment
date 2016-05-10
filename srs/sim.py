@@ -63,8 +63,7 @@ class SIM(object):
 
     def __init__(self, serial, parent_and_port=(None, None)):
         self.serial = serial
-        self.parent = parent_and_port[0]
-        self.port = parent_and_port[1]
+        self.parent, self.port = parent_and_port
 
     def send(self, message):
         if self.parent is not None:
