@@ -19,6 +19,7 @@ class Hittite():
         if connect:
             self.connect()
 
+    @property
     def state(self):
         return self._state
 

@@ -3,6 +3,7 @@ from __future__ import division
 from datetime import datetime
 import numpy as np
 
+
 class LogFile(object):
 
     def __init__(self, filename, start=datetime(2013, 1, 1)):

@@ -3,6 +3,7 @@ from __future__ import division
 from os.path import splitext
 import numpy as np
 
+
 class Sweep(object):
 
     def __init__(self, filename, header_rows=42):
