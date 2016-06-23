@@ -34,7 +34,7 @@ class SR830(object):
         while True:
             character = self.serial.read()
             if not character:  # self.serial has timed out.
-                warnings.warn("Serial port timed out while reading.")
+                print("Serial port timed out while reading.")
                 break
             elif character == self.termination:
                 break
@@ -354,7 +354,10 @@ class SR830(object):
         """
         self.send('AGAN')
         if wait_until_done:
+            orig_timeout = self.serial.timeout
+            self.serial.setTimeout(10)
             self._wait_until_idle()
+            self.serial.setTimeout(orig_timeout)
 
     def auto_reserve(self, wait_until_done=True):
         """

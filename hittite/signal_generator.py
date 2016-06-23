@@ -16,7 +16,7 @@ class Hittite():
                 self.connect()
                 self.disconnect()
             except socket.error:
-                self.address=('192.168.0.070',port)
+                self.address=('192.168.0.200',port)
 
         self.terminator=terminator
         if connect:
