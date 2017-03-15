@@ -165,6 +165,9 @@ class SIM900(SIM):
         if autodetect:
             self.autodetect()
 
+    def __str__(self):
+        return "Mainframe"
+
     def broadcast(self, message):
         self.send('BRDT "{}"'.format(message))
 
@@ -312,6 +315,7 @@ class SIMThermometer(SIM):
 
 
 class SIM921(SIMThermometer):
+    """AC Resistance Bridge"""
 
     # The documentation for the CAPT command is correct.
     CAPT_separator = ','
@@ -327,6 +331,9 @@ class SIM921(SIMThermometer):
     # Minimum and maximum excitation frequencies in Hz:
     minimum_frequency = 1.95
     maximum_frequency = 61.1
+
+    def __str__(self):
+        return "SIM921 AC Resistance Bridge"
 
     # Excitation commands
 
@@ -700,6 +707,7 @@ class SIM921(SIMThermometer):
 
 
 class SIM922(SIMThermometer):
+    """Diode Temperature Monitor"""
 
     # The documentation for the CAPT command is incorrect: the
     # separator is a space, not a comma.
@@ -711,6 +719,9 @@ class SIM922(SIMThermometer):
 
     # This is in seconds; points were sometimes dropped at 0.5 seconds and below.
     write_delay = 1
+
+    def __str__(self):
+        return "SIM922 Diode Temperature Monitor"
 
     def voltage(self, channel):
         return float(self.send_and_receive('VOLT? {}'.format(channel)))
@@ -728,14 +739,28 @@ class SIM922(SIMThermometer):
 
 
 class SIM925(SIM):
-        pass
+    """Octal Four-Wire Multiplexer"""
+    def __str__(self):
+        return "SIM925 Octal Four-Wire Multiplexer"
+
+
+class SIM960(SIM):
+    """Analog PID Controller"""
+    def __str__(self):
+        return "SIM960 Analog PID Controller"
+
+
+class SIM970(SIM):
+    """Quad Digital Voltmeter"""
+    def __str__(self):
+        return "SIM970 Quad Digital Voltmeter"
 
 
 class CalibrationCurve(object):
 
     def __init__(self, sensor, temperature, identification, format='0'):
         """
-        This class represents and calibration curve.
+        This class represents a calibration curve.
 
         This class stores identification strings as uppercase because
         the hardware stores them that way. This allows the
