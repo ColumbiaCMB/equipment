@@ -1,2 +1,3 @@
 # equipment
-Unrelated libraries for communicating with lab equipment.
+
+Libraries for communicating with lab equipment.
